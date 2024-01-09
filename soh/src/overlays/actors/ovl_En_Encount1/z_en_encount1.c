@@ -1,6 +1,7 @@
 #include "z_en_encount1.h"
 #include "vt.h"
 #include "overlays/actors/ovl_En_Tite/z_en_tite.h"
+#include <stdio.h>
 
 #define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_NO_LOCKON)
 
@@ -237,6 +238,7 @@ void EnEncount1_SpawnStalchildOrWolfos(EnEncount1* this, PlayState* play) {
 
     this->outOfRangeTimer = 0;
     spawnPos = this->actor.world.pos;
+
     // In authentic gameplay, the game checks how many Stalchildren were spawned and only spawns new ones
     // when the old ones are despawned and a timer is reached.
     // With Enemy Randomizer on, this will keep spawning enemies based on the timer and the total amount of existing
@@ -254,25 +256,24 @@ void EnEncount1_SpawnStalchildOrWolfos(EnEncount1* this, PlayState* play) {
                     this->fieldSpawnTimer = 60;
                     break;
                 }
+
                 if (this->fieldSpawnTimer == 60) {
-                    this->maxCurSpawns = 2;
+                    this->maxCurSpawns = 10; // number of stalchildren to spawn
                 }
+
                 if (this->fieldSpawnTimer != 0) {
                     this->fieldSpawnTimer--;
                     break;
                 }
 
-                spawnDist = Rand_CenteredFloat(40.0f) + 200.0f;
-                spawnAngle = player->actor.shape.rot.y;
-                if (this->curNumSpawn != 0) {
-                    spawnAngle = -spawnAngle;
-                    spawnDist = Rand_CenteredFloat(40.0f) + 100.0f;
-                }
-                spawnPos.x =
-                    player->actor.world.pos.x + (Math_SinS(spawnAngle) * spawnDist) + Rand_CenteredFloat(40.0f);
+                // Updated logic for spawning stalchildren around link
+                float spawnRadius = 250.0f + Rand_ZeroFloat(20.0f);
+                float spawnAngle = Rand_ZeroFloat(2 * M_PI);
+
+                spawnPos.x = player->actor.world.pos.x + cosf(spawnAngle) * spawnRadius;
                 spawnPos.y = player->actor.floorHeight + 120.0f;
-                spawnPos.z =
-                    player->actor.world.pos.z + (Math_CosS(spawnAngle) * spawnDist) + Rand_CenteredFloat(40.0f);
+                spawnPos.z = player->actor.world.pos.z + sinf(spawnAngle) * spawnRadius;
+                
                 floorY = BgCheck_EntityRaycastFloor4(&play->colCtx, &floorPoly, &bgId, &this->actor, &spawnPos);
                 if (floorY <= BGCHECK_Y_MIN) {
                     break;
